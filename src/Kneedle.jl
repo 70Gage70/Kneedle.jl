@@ -9,9 +9,13 @@ export Testers
 include("main.jl")
 export KneedleResult
 export kneedle, knees
+
+include("viz.jl")
+export viz
     
 @compile_workload begin
     x, y = Testers.double_bump()
+    kneedle(x, y, smoothing = 0.1)
     x, y = Testers.CONVEX_INC
     kneedle(x, y, "convex_inc")
     x, y = Testers.CONVEX_DEC
