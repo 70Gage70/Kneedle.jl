@@ -1,0 +1,16 @@
+name = "Kneedle"
+uuid = "4ef9287f-f14a-4b13-b4c1-9bb5ae54399a"
+authors = ["Gage Bonner <gage.bonner@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+ArgCheck = "dce04be8-c92d-5529-be00-80e4d2c0e197"
+Loess = "4345ca2d-374a-55d4-8d30-97f9976e7612"
+PrecompileTools = "aea7be01-6a6a-4083-8856-8a6e6704d82a"
+SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
+
+[weakdeps]
+Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
+
+[extensions]
+KneedleMakieExt = "Makie"
