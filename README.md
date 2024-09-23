@@ -125,6 +125,12 @@ Visualize the computed knees in `kneedle_result` from data `x`, `y`. Optionally 
 
 This function requires a Makie backend to function, e.g. `import CairoMakie`.
 
-## References
+# See also
+
+- [kneed](https://github.com/arvkevi/kneed): Knee-finding in Python.
+
+- [Yellowbrick](https://www.scikit-yb.org/en/latest/api/cluster/elbow.html?highlight=knee): Machine learning visualization.
+
+# References
 
 [^1]: Satopaa, Ville, et al. *Finding a "kneedle" in a haystack: Detecting knee points in system behavior.* 2011 31st international conference on distributed computing systems workshops. IEEE, 2011.
