@@ -2,6 +2,8 @@ module KneedleMakieExt
 
 using Kneedle
 using Makie
+using PrecompileTools: @compile_workload
+import Random
 
 function Kneedle.viz(
     x::AbstractVector{<:Real},
@@ -14,7 +16,6 @@ function Kneedle.viz(
 
     set_theme!(theme_latexfonts())
     fig = Figure()
-    # ax = Axis(fig[1, 1], aspect = DataAspect(), xlabel = L"x", ylabel = L"y")
     ax = Axis(fig[1, 1], xlabel = L"x", ylabel = L"y")
 
     show_data && lines!(ax, x, y, color = :black, label = "Data", linewidth = linewidth)
@@ -29,6 +30,16 @@ function Kneedle.viz(
     rowsize!(fig.layout, 1, Aspect(1, 0.5))
     resize_to_layout!(fig)
     fig
+end
+
+@compile_workload begin
+    Random.seed!(1234)
+    x, y = Testers.double_bump(noise_level = 0.1)
+    kr = kneedle(x, y, smoothing = 0.1)
+    viz(x, y, kr)
+    x, y = Testers.CONCAVE_INC
+    kr = kneedle(x, y)
+    viz(x, y, kr)
 end
 
 end # module

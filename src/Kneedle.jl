@@ -21,6 +21,8 @@ export viz
     kneedle(x, y, "|¯", S = 0.1)
     kneedle(x, y, "|¯", 2, scan_type = :S)
     kneedle(x, y, "|¯", 2, scan_type = :smoothing)
+    x, y = Testers.CONCAVE_INC
+    kneedle(x, y)
 end
 
 end # module
