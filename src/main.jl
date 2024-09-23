@@ -104,16 +104,20 @@ function kneedle(
     max_x, max_y = maximum(x), maximum(y)
 
     if shape ∈ ["|¯", "concave_inc"] 
+        # default, so no transformation required
         return _kneedle(x, y, S = S, smoothing = smoothing)
     elseif shape ∈ ["|_", "convex_dec"]
+        # flip vertically
         kn = _kneedle(x, max_y .- y, S = S, smoothing = smoothing)
         return KneedleResult(kn.x_smooth, max_y .- kn.y_smooth, kn.knees)
     elseif shape ∈ ["¯|", "concave_dec"]
-        kn = _kneedle(max_x .- x, y, S = S, smoothing = smoothing)
-        return KneedleResult(max_x .- kn.x_smooth, kn.y_smooth, max_x .- kn.knees)
+        # flip horizontally; reverse to ensure x increasing
+        kn = _kneedle(reverse(max_x .- x), reverse(y), S = S, smoothing = smoothing)
+        return KneedleResult(reverse(max_x .- kn.x_smooth), reverse(kn.y_smooth), max_x .- kn.knees)
     elseif shape ∈ ["_|", "convex_inc"]
-        kn = _kneedle(max_x .- x, max_y .- y, S = S, smoothing = smoothing)
-        return KneedleResult(max_x .- kn.x_smooth, max_y .- kn.y_smooth, max_x .- kn.knees)
+        # flip horizontally and vertically; reverse to ensure x increasing
+        kn = _kneedle(reverse(max_x .- x), reverse(max_y .- y), S = S, smoothing = smoothing)
+        return KneedleResult(reverse(max_x .- kn.x_smooth), reverse(max_y .- kn.y_smooth), max_x .- kn.knees)
     end
     
 end
@@ -122,7 +126,8 @@ function kneedle(
     x::AbstractVector{<:Real}, 
     y::AbstractVector{<:Real}; 
     S::Real = 1.0, 
-    smoothing::Union{Real, Nothing} = nothing)
+    smoothing::Union{Real, Nothing} = nothing,
+    verbose::Bool = false)
     
     _line(X) = y[1] + (y[end] - y[1])*(X - x[1])/(x[end] - x[1])
 
@@ -130,12 +135,16 @@ function kneedle(
     increasing = _line(x[end]) > _line(x[1])
     
     if concave && increasing 
+        verbose && @info "Found concave and increasing |¯"
         return kneedle(x, y, "|¯", S = S, smoothing = smoothing)
     elseif !concave && !increasing
+        verbose && @info "Found convex and decreasing |_"
         return kneedle(x, y, "|_", S = S, smoothing = smoothing)
     elseif concave && !increasing
+        verbose && @info "Found concave and decreasing ¯|"
         return kneedle(x, y, "¯|", S = S, smoothing = smoothing)
     elseif !concave && increasing
+        verbose && @info "Found convex and increasing _|"
         return kneedle(x, y, "_|", S = S, smoothing = smoothing)
     end
 end
