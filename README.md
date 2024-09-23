@@ -23,7 +23,7 @@ kr = kneedle(x, y) # kr is a `KneedleResult`
 knees(kr) # [2], therefore a knee is detected at x = 2
 ```
 
-In order to use the plotting functionality, a Makie backend is required. For this example, this amounts to including the line `import CairoMakie`. This provides access to the function `viz(kr; kwargs...)`:
+In order to use the plotting functionality, a Makie backend is required. For this example, this amounts to including the line `import CairoMakie`. This provides access to the function `viz(x, y, kr; kwargs...)`:
 
 ```julia
 import CairoMakie
@@ -121,7 +121,7 @@ julia> length(knees(kr4)) # 2, meaning that the algorithm found 2 knees
 
     viz(x, y, kneedle_result; show_data = true, show_data_smoothed = true, show_knees = true, linewidth = 2.0)
 
-Visualize the computed knees in `kneedle_result` from data `x`, `y`. Optonally show various elements based on keyword arguments and set the line width.
+Visualize the computed knees in `kneedle_result` from data `x`, `y`. Optionally show various elements based on keyword arguments and set the line width.
 
 This function requires a Makie backend to function, e.g. `import CairoMakie`.
 
