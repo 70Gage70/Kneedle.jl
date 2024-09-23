@@ -9,7 +9,7 @@ This object is returned by `kneedle`.
 
 - `x_smooth`: The smoothed `x` points.
 - `y_smooth`: The smoothed `y` points.
-- `knees`: The `x` coordinates of the computed knees/elbows.
+- `knees`: The a vector of `x` coordinates of the computed knees/elbows.
 """
 struct KneedleResult{X<:Real}
     x_smooth::Vector{Float64}
@@ -23,6 +23,11 @@ end
 Return `kr.knees`.
 """
 knees(kr::KneedleResult) = kr.knees
+
+"""
+    kneedle
+"""
+function kneedle end
 
 """
 	_kneedle(x, y; S = 1.0, smoothing = nothing)
@@ -85,9 +90,6 @@ function _kneedle(
     return KneedleResult(collect(float(x_s)), collect(float(y_s)), knees_res)
 end
 
-"""
-    kneedle(x, y, shape; S = 1.0, smoothing = nothing)
-"""
 function kneedle(
     x::AbstractVector{<:Real}, 
     y::AbstractVector{<:Real},
@@ -146,5 +148,104 @@ function kneedle(
     elseif !concave && increasing
         verbose && @info "Found convex and increasing _|"
         return kneedle(x, y, "_|", S = S, smoothing = smoothing)
+    end
+end
+
+function _kneedle_scan_S(
+    x::AbstractVector{<:Real}, 
+    y::AbstractVector{<:Real},
+    shape::String, 
+    n_knees::Integer; 
+    smoothing::Union{Real, Nothing} = nothing)
+
+    # usually, higher S means less knees; define 1/s here since easier to keep track of
+    _n_knees(s) = kneedle(x, y, shape, S = 1/s, smoothing = smoothing) |> x -> length(knees(x))
+    lb, ub = 0.1, 10.0
+    while _n_knees(lb) > n_knees
+        lb = lb/2
+    end
+
+    while _n_knees(ub) < n_knees
+        ub = ub*2
+    end
+
+    a, b = lb, ub
+    c = (a + b)/2
+    n_iter = 0
+    
+     # bisection
+    while _n_knees(c) != n_knees
+        if _n_knees(c) - n_knees > 0
+            b = c
+        else
+            a = c
+        end
+        
+        c = (a + b)/2
+        n_iter += 1
+    
+        if n_iter >= 20
+            break
+        end
+    end
+
+    return kneedle(x, y, shape, S = 1/c, smoothing = smoothing)
+end
+
+function _kneedle_scan_smooth(
+    x::AbstractVector{<:Real}, 
+    y::AbstractVector{<:Real},
+    shape::String, 
+    n_knees::Integer; 
+    S::Real = 1.0)
+
+    # usually, higher smoothing means less knees; define 1/s here since easier to keep track of
+    _n_knees(s) = kneedle(x, y, shape, S = S, smoothing = 1/s) |> x -> length(knees(x))
+    ub = 10.0
+
+    while _n_knees(ub) < n_knees
+        ub = ub*2
+    end
+
+    a, b = 1.0, ub
+    c = (a + b)/2
+    n_iter = 0
+    
+    # bisection
+    while _n_knees(c) != n_knees
+        if _n_knees(c) - n_knees > 0
+            b = c
+        else
+            a = c
+        end
+        
+        c = (a + b)/2
+        n_iter += 1
+    
+        if n_iter >= 20
+            break
+        end
+    end
+
+    return kneedle(x, y, shape, S = S, smoothing = 1/c)
+end
+
+function kneedle(
+    x::AbstractVector{<:Real}, 
+    y::AbstractVector{<:Real},
+    shape::String, 
+    n_knees::Integer; 
+    scan_type::Symbol = :S,
+    S::Real = 1.0,
+    smoothing::Union{Real, Nothing} = nothing)
+
+    @argcheck n_knees >= 1 
+    @argcheck n_knees < length(x)/3 "Too many knees!"
+    @argcheck scan_type ∈ [:S, :smoothing]
+
+    if scan_type == :S
+        return _kneedle_scan_S(x, y, shape, n_knees, smoothing = smoothing)
+    elseif scan_type == :smoothing
+        return _kneedle_scan_smooth(x, y, shape, n_knees, S = S)
     end
 end

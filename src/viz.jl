@@ -8,8 +8,19 @@ This function requires a Makie backend to function, e.g. `import CairoMakie`.
 
 ### Example
 
+Install a Makie backend such as `CairoMakie` if you haven't already via the following
+
 ```julia-repl
-julia> x, y = Testers.CONVEX_INC; kr = kneedle(x, y);
+julia> import Pkg
+julia> Pkg.add("CairoMakie")
+julia> import CairoMakie
+```
+
+Once the backend is loaded, we have
+
+```julia-repl
+julia> x, y = Testers.CONVEX_INC
+julia> kr = kneedle(x, y);
 julia> viz(x, y, kr)
 ```
 """
