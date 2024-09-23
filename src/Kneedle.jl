@@ -7,7 +7,8 @@ include("testers.jl")
 export Testers
 
 include("main.jl")
-export kneedle
+export KneedleResult
+export kneedle, knees
     
 @compile_workload begin
     x, y = Testers.double_bump()

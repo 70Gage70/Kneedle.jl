@@ -1,9 +1,32 @@
-# struct KneedleResult{X<:AbstractVector, Y<:AbstractVector}
-#     x::X
-#     y::Y
-#     y_smoothed::Vector{Float64}
-#     knees::X
-# end
+"""
+    struct KneedleResult{X, Y}
+
+A container for the output of the Kneedle algorithm.
+
+This object is returned by `kneedle`.
+
+### Fields 
+
+- `x`: The original `x` points.
+- `y`: The original `y` points.
+- `x_smooth`: The smoothed `x` points.
+- `y_smooth`: The smoothed `y` points.
+- `knees`: The `x` coordinates of the computed knees/elbows.
+"""
+struct KneedleResult{X<:Real, Y<:Real}
+    x::Vector{X}
+    y::Vector{Y}
+    x_smooth::Vector{Float64}
+    y_smooth::Vector{Float64}
+    knees::Vector{X}
+end
+
+"""
+    knees(kr::KneedleResult)
+
+Return `kr.knees`.
+"""
+knees(kr::KneedleResult) = kr.knees
 
 """
 	_kneedle(x, y; S = 1.0, smoothing = nothing)
@@ -42,10 +65,16 @@ function _kneedle(
 	lmx = [i for i in 2:n-1 if (y_d[i - 1] < y_d[i]) && (y_d[i] > y_d[i + 1])]
 	
 	if length(lmx) == 1
-		return [x[lmx[1]]]
+        return KneedleResult(
+            collect(x), 
+            collect(y), 
+            collect(float(x_s)), 
+            collect(float(y_s)), 
+            [x[lmx[1]]]
+        )
 	end
 
-	knees = Float64[]
+	knees = typeof(x)[]
 	
 	x_lmx = x_d[lmx]
 	y_lmx = y_d[lmx]
@@ -61,7 +90,13 @@ function _kneedle(
 		end
 	end
 	
-	return knees
+    return KneedleResult(
+        collect(x), 
+        collect(y), 
+        collect(float(x_s)), 
+        collect(float(y_s)), 
+        knees
+    )
 end
 
 """
@@ -80,18 +115,19 @@ function kneedle(
     @argcheck issorted(x) || issorted(-x)
     @argcheck shape ∈ ["|¯", "|_", "¯|", "_|"] || shape ∈ ["concave_inc", "convex_dec", "concave_dec", "convex_inc"]
 
+    max_x, max_y = maximum(x), maximum(y)
+
     if shape ∈ ["|¯", "concave_inc"] 
         return _kneedle(x, y, S = S, smoothing = smoothing)
     elseif shape ∈ ["|_", "convex_dec"]
-        return _kneedle(x, maximum(y) .- y, S = S, smoothing = smoothing)
+        kn = _kneedle(x, max_y .- y, S = S, smoothing = smoothing)
+        return KneedleResult(kn.x, max_y .- kn.y, kn.x_smooth, max_y .- kn.y_smooth, kn.knees)
     elseif shape ∈ ["¯|", "concave_dec"]
-        max_x = maximum(x)
         kn = _kneedle(max_x .- x, y, S = S, smoothing = smoothing)
-        return max_x .- kn
+        return KneedleResult(max_x .- kn.x, kn.y, max_x .- kn.x_smooth, kn.y_smooth, max_x .- kn.knees)
     elseif shape ∈ ["_|", "convex_inc"]
-        max_x = maximum(x)
-        kn = _kneedle(max_x .- x, maximum(y) .- y, S = S, smoothing = smoothing)
-        return max_x .- kn
+        kn = _kneedle(max_x .- x, max_y .- y, S = S, smoothing = smoothing)
+        return KneedleResult(max_x .- kn.x, max_y .- kn.y, max_x .- kn.x_smooth, max_y .- kn.y_smooth, max_x .- kn.knees)
     end
     
 end
