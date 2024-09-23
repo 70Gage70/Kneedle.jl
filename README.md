@@ -27,7 +27,7 @@ In order to use the plotting functionality, a Makie backend is required. For thi
 
 ```julia
 import CairoMakie
-viz(kr)
+viz(x, y, kr, show_data_smoothed = false) # we didn't use any smoothing here, so no need to show it
 ```
 
 [!["Plot"](assets/readme.png)](https://70gage70.github.io/Kneedle.jl/)
