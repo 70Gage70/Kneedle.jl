@@ -125,24 +125,6 @@ Visualize the computed knees in `kneedle_result` from data `x`, `y`. Optonally s
 
 This function requires a Makie backend to function, e.g. `import CairoMakie`.
 
-### Example
-
-Install a Makie backend such as `CairoMakie` if you haven't already via the following
-
-```julia-repl
-julia> import Pkg
-julia> Pkg.add("CairoMakie")
-julia> import CairoMakie
-```
-
-Once the backend is loaded, we have
-
-```julia-repl
-julia> x, y = Testers.CONVEX_INC
-julia> kr = kneedle(x, y);
-julia> viz(x, y, kr)
-```
-
 ## References
 
 [^1]: Satopaa, Ville, et al. *Finding a "kneedle" in a haystack: Detecting knee points in system behavior.* 2011 31st international conference on distributed computing systems workshops. IEEE, 2011.
