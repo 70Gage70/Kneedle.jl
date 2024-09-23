@@ -61,7 +61,7 @@ should be one of these.
 - concave decreasing: `¯|` or `"concave_dec"`
 - convex increasing: `_|` or `"convex_inc"`
 
-Note that the symbol `¯` is entered by typing `\\highminus<TAB>`
+Note that the symbol `¯` is entered by typing `\highminus<TAB>`
 
 ## Methods
 
