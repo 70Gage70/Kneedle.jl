@@ -41,11 +41,11 @@ The main function `kneedle` is documented here as well as the plotting convenien
 
     kneedle(args...)
     
-There are several methods for the `kneedle` function as detailed below; each returns a [`KneedleResult`](@ref). 
+There are several methods for the `kneedle` function as detailed below; each returns a `KneedleResult`. 
 
 Use `knees(kr::KneedleResult)` to obtain the computed knees/elbows as a list of `x` coordinates.
 
-Refer to [`viz`](@ref) for visualization.
+Refer to `viz` for visualization.
 
 Each `kneedle` function contains the args `x` and `y` which refer to the input data. It is required that `x` is sorted.
 
