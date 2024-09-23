@@ -31,7 +31,7 @@ Refer to [`KneedleResult`](@ref) or [`kneedle`](@ref) for more information.
 knees(kr::KneedleResult) = kr.knees
 
 """
-    kneedle(args...,)
+    kneedle(args...)
     
 There are several methods for the `kneedle` function as detailed below; each returns a [`KneedleResult`](@ref). 
 
