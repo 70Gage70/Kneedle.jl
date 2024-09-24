@@ -7,6 +7,7 @@ using InteractiveUtils
 # ╔═╡ 120250f8-5689-443d-bf99-dca7e1b41a82
 begin
 	import Pkg
+	# Pkg.develop(path = "/Users/gagebonner/Desktop/Repositories/Kneedle.jl/")
 	Pkg.add(url="https://github.com/70Gage70/Kneedle.jl", rev="master")
 	Pkg.add([
 		"CairoMakie", 
@@ -26,29 +27,23 @@ md"""
 # Kneedle.jl
 """
 
-# ╔═╡ 14bbc45a-621e-4b88-a821-0ba87083adc2
-md"""
-# Introduction
-"""
-
-# ╔═╡ 3f40fc7d-4bb4-4763-b03c-f32d23ee3b48
-md"""
-This is the documentation for the package [Kneedle.jl](https://github.com/70Gage70/Kneedle.jl). The documentation is powered by a [Pluto.jl](https://plutojl.org/) notebook. Note that executed code shows the result *above* the code!
-
-Kneedle.jl is a [Julia](https://julialang.org/) implementation of the Kneedle[^1] knee-finding algorithm. This detects "corners" (or "knees", "elbows", ...) in a dataset `(x, y)`.
-"""
-
-# ╔═╡ 3638014c-ed4f-4c50-a91c-edf3db6fc97d
-md"""
-# Features
-"""
-
 # ╔═╡ 9b5823a0-2f97-464a-929a-0596dc6a99a2
 md"""
-- Exports one main function `kneedle` with the ability to select the shape and number of knees to search for.
-- Built-in data smoothing from [Loess.jl](https://github.com/JuliaStats/Loess.jl).
-- [Makie](https://docs.makie.org/stable/) extension for quick visualization.
+!!! info ""
+	This is the documentation for the package [Kneedle.jl](https://github.com/70Gage70/Kneedle.jl). The documentation is powered by a [Pluto.jl](https://plutojl.org/) notebook. 
+	
+	Note that executed code shows the result *above* the code!
+	
+	Kneedle.jl is a [Julia](https://julialang.org/) implementation of the Kneedle[^1] knee-finding algorithm. This detects "corners" (or "knees", "elbows", ...) in a dataset `(x, y)`.
+
+	**Features**
+	- Exports one main function `kneedle` with the ability to select the shape and number of knees to search for.
+	- Built-in data smoothing from [Loess.jl](https://github.com/JuliaStats/Loess.jl).
+	- [Makie](https://docs.makie.org/stable/) extension for quick visualization.
 """
+
+# ╔═╡ 966454cc-11a6-486f-b124-d3f9d3ee0591
+TableOfContents(title = "Contents", depth = 2, aside= false)
 
 # ╔═╡ 74fc8395-26cf-4595-ac96-abecf7273d6c
 md"""
@@ -299,23 +294,35 @@ md"""
 We demonstrate this functionality further with a true double knee:
 """
 
+# ╔═╡ a2592b4d-24c7-48f6-9ee8-b9207a63bd46
+begin
+	Random.seed!(1234) # reproducible randomness
+	x_2, y_2 = Testers.double_bump(noise_level = 0.0)
+	x_2noise, y_2noise = Testers.double_bump(noise_level = 0.3)
+	nothing
+end
+
 # ╔═╡ 3b0080ef-6398-4106-960a-8dc0ec074864
 let
-	x_2, y_2 = Testers.double_bump(noise_level = 0.0)
 	kr = kneedle(x_2, y_2, "|¯", 2)
 	viz(x_2, y_2, kr)
 end
 
 # ╔═╡ 7dd9931e-8b3e-4928-b4c4-ffc9cbe6efd3
 md"""
-And again with noise:
+And again with noise. Keep in mind that we still might have to set the parameter that we aren't scanning according to the data.
 """
 
 # ╔═╡ 0ef236c7-4cf8-424e-b32b-187ee5b71f25
 let
-	x_2, y_2 = Testers.double_bump(noise_level = 0.3)
-	kr = kneedle(x_2, y_2, "|¯", 2, scan_type = :smoothing)
-	viz(x_2, y_2, kr)
+	kr = kneedle(x_2noise, y_2noise, "|¯", 2, scan_type = :S, smoothing = 0.4)
+	viz(x_2noise, y_2noise, kr)
+end
+
+# ╔═╡ ab8a3ae9-3c3f-4f6d-a4cc-ce23f734e66f
+let
+	kr = kneedle(x_2noise, y_2noise, "|¯", 2, scan_type = :smoothing, S = 0.1)
+	viz(x_2noise, y_2noise, kr)
 end
 
 # ╔═╡ b60e5d82-8ba6-4bd3-a471-5fec6353da69
@@ -392,9 +399,6 @@ begin
 	"""
 end
 
-# ╔═╡ 027d8aab-8c50-40cd-b887-fe4f877152bd
-TableOfContents(depth = 2)
-
 # ╔═╡ 269ad618-ce01-4d06-b0ce-e01a60dedfde
 HTML("""
 <!-- the wrapper span -->
@@ -423,10 +427,8 @@ HTML("""
 
 # ╔═╡ Cell order:
 # ╟─1d5ffaa0-224b-4587-b7ae-859a26512cc3
-# ╟─14bbc45a-621e-4b88-a821-0ba87083adc2
-# ╟─3f40fc7d-4bb4-4763-b03c-f32d23ee3b48
-# ╟─3638014c-ed4f-4c50-a91c-edf3db6fc97d
 # ╟─9b5823a0-2f97-464a-929a-0596dc6a99a2
+# ╟─966454cc-11a6-486f-b124-d3f9d3ee0591
 # ╟─74fc8395-26cf-4595-ac96-abecf7273d6c
 # ╟─ec2763fd-6d65-4d61-832c-cc683e3607b2
 # ╟─99842416-3d0a-4def-aab9-731e2768b8c4
@@ -468,9 +470,11 @@ HTML("""
 # ╠═8e4755cf-f2aa-41d0-a589-d2653a5154ca
 # ╟─43c68b71-cd5c-4185-ac6a-3926ca357fa4
 # ╟─9d4e03a5-c9fc-4fc5-b121-1f88710f2780
+# ╠═a2592b4d-24c7-48f6-9ee8-b9207a63bd46
 # ╠═3b0080ef-6398-4106-960a-8dc0ec074864
 # ╟─7dd9931e-8b3e-4928-b4c4-ffc9cbe6efd3
 # ╠═0ef236c7-4cf8-424e-b32b-187ee5b71f25
+# ╠═ab8a3ae9-3c3f-4f6d-a4cc-ce23f734e66f
 # ╟─b60e5d82-8ba6-4bd3-a471-5fec6353da69
 # ╟─1a6cfb27-b5d6-46b3-8f48-399fae9247c3
 # ╟─faaf42c4-e817-441c-b3db-8ec562e15323
@@ -488,5 +492,4 @@ HTML("""
 # ╟─53873f99-598e-4136-affa-572f4ee2d4d3
 # ╟─edd49b23-42bc-41cf-bfef-e1538fcdd924
 # ╟─120250f8-5689-443d-bf99-dca7e1b41a82
-# ╠═027d8aab-8c50-40cd-b887-fe4f877152bd
 # ╟─269ad618-ce01-4d06-b0ce-e01a60dedfde

@@ -3,11 +3,11 @@
 
 A container for the output of the Kneedle algorithm.
 
-Use [`knees`](@ref) to access the `knees` field.
+Use `knees` to access the `knees` field.
 
-Refer to [`viz`](@ref) for visualization.
+Refer to `viz` for visualization.
 
-See the [`kneedle`](@ref) function for further general information.
+See the `kneedle` function for further general information.
 
 ### Fields 
 
@@ -26,18 +26,18 @@ end
 
 Return `kr.knees`.
 
-Refer to [`KneedleResult`](@ref) or [`kneedle`](@ref) for more information.
+Refer to `KneedleResult` or `kneedle` for more information.
 """
 knees(kr::KneedleResult) = kr.knees
 
 """
     kneedle(args...)
     
-There are several methods for the `kneedle` function as detailed below; each returns a [`KneedleResult`](@ref). 
+There are several methods for the `kneedle` function as detailed below; each returns a `KneedleResult`. 
 
 Use `knees(kr::KneedleResult)` to obtain the computed knees/elbows as a list of `x` coordinates.
 
-Refer to [`viz`](@ref) for visualization.
+Refer to `viz` for visualization.
 
 Each `kneedle` function contains the args `x` and `y` which refer to the input data. It is required that `x` is sorted.
 
@@ -118,7 +118,7 @@ julia> length(knees(kr4)) # 2, meaning that the algorithm found 2 knees
 function kneedle end
 
 
-# Compute the main Kneedle algorithm and return a [`KneedleResult`](@ref).
+# Compute the main Kneedle algorithm and return a KneedleResult
 # Assumes that data is concave increasing, i.e. `|¯` and that `x` is sorted.
 function _kneedle(
 	x::AbstractVector{<:Real}, 

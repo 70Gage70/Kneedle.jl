@@ -54,7 +54,7 @@ function double_bump(;
 
     _Ncdf(x, μ, σ) = (1/2)*(1 + erf((x - μ)/(sqrt(2)*σ)))
 
-	x = range(μ1 - 2*σ1, μ2 + 2*σ2, length = n_points)
+	x = range(μ1 - 3*σ1, μ2 + 3*σ2, length = n_points)
     _y(x) = A1*_Ncdf(x, μ1, σ1) + A2*_Ncdf(x, μ2, σ2) + noise_level*randn()
 
     return (x, _y.(x))
