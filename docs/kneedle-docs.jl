@@ -8,6 +8,9 @@ using InteractiveUtils
 begin
 	import Pkg
 	Pkg.add(url="https://github.com/70Gage70/Kneedle.jl", rev="master")
+	Pkg.add([
+		"CairoMakie", 
+		"PlutoUI"])
 	using PlutoUI
 	import Random
 end
@@ -374,6 +377,21 @@ md"""
 This section contains tools to ensure the documentation works correctly; it is not part of the documentation itself.
 """
 
+# ╔═╡ edd49b23-42bc-41cf-bfef-e1538fcdd924
+begin
+	@info "Setting notebook width."
+	html"""
+	<style>
+		main {
+			margin: 0 auto;
+			max-width: 2000px;
+	    	padding-left: 5%;
+	    	padding-right: 5%;
+		}
+	</style>
+	"""
+end
+
 # ╔═╡ 027d8aab-8c50-40cd-b887-fe4f877152bd
 TableOfContents(depth = 2)
 
@@ -468,6 +486,7 @@ HTML("""
 # ╟─384711a6-d7cb-4d69-a790-2f3d808aa5d8
 # ╟─ae55f28c-7aac-11ef-0320-f11cdad35bfe
 # ╟─53873f99-598e-4136-affa-572f4ee2d4d3
+# ╟─edd49b23-42bc-41cf-bfef-e1538fcdd924
 # ╟─120250f8-5689-443d-bf99-dca7e1b41a82
 # ╠═027d8aab-8c50-40cd-b887-fe4f877152bd
 # ╟─269ad618-ce01-4d06-b0ce-e01a60dedfde
