@@ -32,14 +32,34 @@ function Kneedle.viz(
     fig
 end
 
+function Kneedle.viz!(
+    ax::Makie.Axis,
+    x::AbstractVector{<:Real},
+    y::AbstractVector{<:Real},
+    kr::KneedleResult; 
+    show_data::Bool = true,
+    show_data_smoothed::Bool = true,
+    show_knees::Bool = true,
+    linewidth::Real = 2.0)
+
+    show_data && lines!(ax, x, y, color = :black, label = "Data", linewidth = linewidth)
+    show_data_smoothed && lines!(ax, kr.x_smooth, kr.y_smooth, color = :red, linewidth = linewidth, label = "Smoothed Data")
+    if show_knees
+        for knee_x in knees(kr)
+            vlines!(ax, knee_x, color = :blue, linewidth = linewidth, label = "Knee")
+        end
+    end
+
+    return nothing
+end
+
 @compile_workload begin
     Random.seed!(1234)
     x, y = Testers.double_bump(noise_level = 0.1)
     kr = kneedle(x, y, smoothing = 0.1)
     viz(x, y, kr)
-    x, y = Testers.CONCAVE_INC
-    kr = kneedle(x, y)
-    viz(x, y, kr)
+    fig = Figure(); ax = Axis(fig[1, 1]);
+    viz!(ax, x, y, kr)
 end
 
 end # module

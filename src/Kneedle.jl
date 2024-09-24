@@ -12,7 +12,7 @@ export KneedleResult
 export kneedle, knees
 
 include("viz.jl")
-export viz
+export viz, viz!
     
 @compile_workload begin
     Random.seed!(1234)
