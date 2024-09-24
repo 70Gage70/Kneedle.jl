@@ -53,10 +53,10 @@ in less detection.
 There are four possible knee/elbow shapes in consideration. If a `kneedle` function takes `shape` as an argument, it \
 should be one of these.
 
-- concave increasing: `|¯` or `"concave_inc"`
-- convex decreasing: `|_` or `"convex_dec"`
-- concave decreasing: `¯|` or `"concave_dec"`
-- convex increasing: `_|` or `"convex_inc"`
+- concave increasing: `"|¯"` or `"concave_inc"`
+- convex decreasing: `"|_"` or `"convex_dec"`
+- concave decreasing: `"¯|"` or `"concave_dec"`
+- convex increasing: `"_|"` or `"convex_inc"`
 
 Note that the symbol `¯` is entered by typing `\\highminus<TAB>`
 
@@ -118,7 +118,7 @@ julia> length(knees(kr4)) # 2, meaning that the algorithm found 2 knees
 function kneedle end
 
 
-# C ompute the main Kneedle algorithm and return a [`KneedleResult`](@ref).
+# Compute the main Kneedle algorithm and return a [`KneedleResult`](@ref).
 # Assumes that data is concave increasing, i.e. `|¯` and that `x` is sorted.
 function _kneedle(
 	x::AbstractVector{<:Real}, 

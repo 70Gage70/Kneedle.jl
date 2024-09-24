@@ -53,13 +53,12 @@ Each `kneedle` function contains the kwargs `S` and `smoothing`. `S > 0` refers 
 
 ## Shapes
 
-There are four possible knee/elbow shapes in consideration. If a `kneedle` function takes `shape` as an argument, it \
-should be one of these.
+There are four possible knee/elbow shapes in consideration. If a `kneedle` function takes `shape` as an argument, it should be one of these.
 
-- concave increasing: `|¯` or `"concave_inc"`
-- convex decreasing: `|_` or `"convex_dec"`
-- concave decreasing: `¯|` or `"concave_dec"`
-- convex increasing: `_|` or `"convex_inc"`
+- concave increasing: `"|¯"` or `"concave_inc"`
+- convex decreasing: `"|_"` or `"convex_dec"`
+- concave decreasing: `"¯|"` or `"concave_dec"`
+- convex increasing: `"_|"` or `"convex_inc"`
 
 Note that the symbol `¯` is entered by typing `\highminus<TAB>`
 
