@@ -226,7 +226,7 @@ end
 
 # ╔═╡ 4dfc03de-d242-4ab0-abf5-98f77d6cfa65
 md"""
-We recover the noiseless knee but still with some additional artifacts. Increasing `S` further "settles" into an incorrect location:
+We find one knee in a sensible position but still with some additional artifacts. Increasing `S` further "settles" into an incorrect location:
 """
 
 # ╔═╡ 200aca58-2b61-4ab5-a63b-a9375122ca64
@@ -310,7 +310,7 @@ end
 
 # ╔═╡ 7dd9931e-8b3e-4928-b4c4-ffc9cbe6efd3
 md"""
-And again with noise. Keep in mind that we still might have to set the parameter that we aren't scanning according to the data.
+And again with noise. Keep in mind that for very noisy data we still might have to set the parameter that we aren't scanning according to the source.
 """
 
 # ╔═╡ 0ef236c7-4cf8-424e-b32b-187ee5b71f25
@@ -324,6 +324,34 @@ let
 	kr = kneedle(x_2noise, y_2noise, "|¯", 2, scan_type = :smoothing, S = 0.1)
 	viz(x_2noise, y_2noise, kr)
 end
+
+# ╔═╡ f1374349-bcfc-40dc-9dd5-20b2e1deea4f
+md"""
+## Application to sparse regression
+"""
+
+# ╔═╡ 94256cdc-1f6e-45e5-8674-17feac55b044
+md"""
+Linear regression finds coefficients $\xi$ such that $y ≈ X ξ$ for a feature matrix $X$ and target $y$. *Sparse* linear regression further asks that the coefficient vector $\xi$ be sparse, i.e that it contain as many zeros as possible. This can be thought of as asking to represent $y$ by just the most relevant features of $X$.
+
+Many sparse regression algorithms involve a thresholding parameter, say $\lambda$, that determines the minimum size of allowed coefficients. The idea is that small $\lambda$ implies that $X \xi$ is accurate but not sparse, whereas large $\lambda$ implies that $X \xi$ is sparse but not accurate. The idea is therefore to pick the largest $\lambda$ possible while still having a sufficiently accurate solution. On a plot of model error vs. $\lambda$, this is equivalent to asking for the `_|` knee.
+
+The following data come from a sparse regression problem solved offline.
+"""
+
+# ╔═╡ 8cc49a7c-3fbc-4271-b486-39d4043bf339
+details("Data", md"""
+```julia
+λs = [0.1, 0.14384498882876628, 0.20691380811147897, 0.29763514416313186, 0.4281332398719394, 0.6158482110660264, 0.8858667904100826, 1.2742749857031337, 1.8329807108324359, 2.636650898730358, 3.79269019073225, 5.455594781168519, 7.847599703514613, 11.28837891684689, 16.237767391887218, 23.357214690901223, 33.59818286283783, 48.32930238571752, 69.51927961775606, 100.0]
+
+errs = [10.934290106930245, 10.83733683826938, 11.017433337213713, 11.124893613300706, 11.119853842082296, 11.099548594837454, 11.03789948291263, 16.205849291523638, 16.206016168361213, 16.204933621558062, 16.205591636093704, 16.205684051603743, 16.20568226625062, 16.228735841057354, 16.23024949820953, 16.23017241763306, 16.229714642370798, 16.22987500373123, 16.229503091439568, 16.230329157796838]
+```
+""")
+
+# ╔═╡ e8db1bdd-872f-4b83-b6f9-5d491e5b9b36
+md"""
+We see that `kneedle` correctly finds the largest $\lambda$ that has small error.
+"""
 
 # ╔═╡ b60e5d82-8ba6-4bd3-a471-5fec6353da69
 md"""
@@ -425,6 +453,25 @@ HTML("""
 </div>
 """)
 
+# ╔═╡ a35b1234-a722-442b-8969-7635a28556ff
+begin
+	@info "Defining data"
+	
+	λs = [0.1, 0.14384498882876628, 0.20691380811147897, 0.29763514416313186, 0.4281332398719394, 0.6158482110660264, 0.8858667904100826, 1.2742749857031337, 1.8329807108324359, 2.636650898730358, 3.79269019073225, 5.455594781168519, 7.847599703514613, 11.28837891684689, 16.237767391887218, 23.357214690901223, 33.59818286283783, 48.32930238571752, 69.51927961775606, 100.0]
+	errs = [10.934290106930245, 10.83733683826938, 11.017433337213713, 11.124893613300706, 11.119853842082296, 11.099548594837454, 11.03789948291263, 16.205849291523638, 16.206016168361213, 16.204933621558062, 16.205591636093704, 16.205684051603743, 16.20568226625062, 16.228735841057354, 16.23024949820953, 16.23017241763306, 16.229714642370798, 16.22987500373123, 16.229503091439568, 16.230329157796838]
+	nothing
+end
+
+# ╔═╡ b3563637-f40d-4c11-ab15-5c60c365162c
+let
+	fig = Figure(); ax = Axis(fig[1, 1], xlabel = L"\log_{10} \, \lambda", ylabel = "error")
+	log10λs = log10.(λs)
+	kr = kneedle(log10λs, errs, "_|")
+	viz!(ax, log10λs, errs, kr, show_data_smoothed=false)
+	Legend(fig[2, 1], ax, orientation = :horizontal)
+	fig
+end
+
 # ╔═╡ Cell order:
 # ╟─1d5ffaa0-224b-4587-b7ae-859a26512cc3
 # ╟─9b5823a0-2f97-464a-929a-0596dc6a99a2
@@ -475,6 +522,11 @@ HTML("""
 # ╟─7dd9931e-8b3e-4928-b4c4-ffc9cbe6efd3
 # ╠═0ef236c7-4cf8-424e-b32b-187ee5b71f25
 # ╠═ab8a3ae9-3c3f-4f6d-a4cc-ce23f734e66f
+# ╟─f1374349-bcfc-40dc-9dd5-20b2e1deea4f
+# ╟─94256cdc-1f6e-45e5-8674-17feac55b044
+# ╟─8cc49a7c-3fbc-4271-b486-39d4043bf339
+# ╠═b3563637-f40d-4c11-ab15-5c60c365162c
+# ╟─e8db1bdd-872f-4b83-b6f9-5d491e5b9b36
 # ╟─b60e5d82-8ba6-4bd3-a471-5fec6353da69
 # ╟─1a6cfb27-b5d6-46b3-8f48-399fae9247c3
 # ╟─faaf42c4-e817-441c-b3db-8ec562e15323
@@ -493,3 +545,4 @@ HTML("""
 # ╟─edd49b23-42bc-41cf-bfef-e1538fcdd924
 # ╟─120250f8-5689-443d-bf99-dca7e1b41a82
 # ╟─269ad618-ce01-4d06-b0ce-e01a60dedfde
+# ╟─a35b1234-a722-442b-8969-7635a28556ff

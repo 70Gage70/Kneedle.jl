@@ -29,7 +29,7 @@ function viz end
 """
     viz!(ax, x, y, kneedle_result; show_data = true, show_data_smoothed = true, show_knees = true, linewidth = 2.0)
 
-Identical to 'viz`, but the plots are added to `ax::Makie.Axis`.
+Identical to `viz`, but the plots are added to `ax::Makie.Axis`.
 
 - The plot of `(x, y)` is labeled "Data"
 - The plot of `(x_smooth, y_smooth)` is labeled "Smoothed Data"
