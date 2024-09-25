@@ -364,6 +364,9 @@ details("kneedle", @doc kneedle)
 # ╔═╡ faaf42c4-e817-441c-b3db-8ec562e15323
 details("KneedleResult", @doc KneedleResult)
 
+# ╔═╡ 975a39fa-f4ad-418a-b2c2-98af962a1037
+details("knees", @doc knees)
+
 # ╔═╡ 98a9b4cb-8fd9-480c-b1ce-418672e0441a
 details("viz", @doc viz)
 
@@ -530,6 +533,7 @@ end
 # ╟─b60e5d82-8ba6-4bd3-a471-5fec6353da69
 # ╟─1a6cfb27-b5d6-46b3-8f48-399fae9247c3
 # ╟─faaf42c4-e817-441c-b3db-8ec562e15323
+# ╟─975a39fa-f4ad-418a-b2c2-98af962a1037
 # ╟─98a9b4cb-8fd9-480c-b1ce-418672e0441a
 # ╟─671cfa97-f929-4cf4-8790-221d1ff1c6bc
 # ╟─09000615-a7d7-421b-8444-113821058b96
