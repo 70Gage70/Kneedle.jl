@@ -145,7 +145,7 @@ function _kneedle(
 	y_sn = (y_s .- y_min)/(y_max - y_min)
 
 	### STEP 3: DIFFERENCES
-	x_d = deepcopy(x_sn)
+	x_d = @view x_sn[:]
 	y_d = y_sn - x_sn
 
 	### STEP 4: CANDIDATE LOCAL MAXIMA
