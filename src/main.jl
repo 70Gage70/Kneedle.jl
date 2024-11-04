@@ -81,7 +81,12 @@ This function finds knees/elbows with the given `shape`.
 
 This function finds exactly `n_knees` knees/elbows with the given `shape`.
 
-This works by bisecting either `S` (if `scan_type == :S`) or `smoothing` (if `scan_type == :smoothing`).
+There are three options for `scan_type`.
+
+- `:S`: Bisect by varying `S` (with a given `smoothing`.)
+- `:smoothing`: Bisect by varying `smoothing` (with a given `S`.)
+- `:strength`: Sort knees by "strength" (size of the jump to adjacent points) and take the strongest.
+- `:jump`: Find 1 knee by looking for the single biggest jump in `y`. Applies no smoothing.
 
 ## Examples
 
@@ -332,7 +337,64 @@ function _kneedle_scan_smooth(
     return kneedle(x, y, shape, S = S, smoothing = 1/c)
 end
 
-# find a given number of knees by searching either the sensitivity or the smoothing
+# sort the knees by "strength" (size of y differences) and take the largest given number
+function _kneedle_scan_strength(
+    x::AbstractVector{<:Real}, 
+    y::AbstractVector{<:Real},
+    shape::String, 
+    n_knees::Integer; 
+    S::Real = 1.0,
+    smoothing::Union{Real, Nothing} = nothing)
+
+    kr = kneedle(x, y, shape, S = S, smoothing = smoothing)
+    ks = knees(kr)
+
+    if length(ks) < n_knees
+        error("Could not find the requested number of knees (requested too many).")
+    end
+
+    kn_idxs = [findfirst(p -> abs(p - k) < 1e-10, x) for k in ks]
+
+    if shape ∈ ["|¯", "concave_inc", "|_", "convex_dec"] 
+        # strongest knee has the biggest jump from the "previous" point
+        dy = [abs(y[kn_idx - 1] - y[kn_idx]) for kn_idx in kn_idxs]
+    elseif shape ∈ ["¯|", "concave_dec", "_|", "convex_inc"]
+        # strongest knee has the biggest jump tp the "next" point
+        dy = [abs(y[kn_idx + 1] - y[kn_idx]) for kn_idx in kn_idxs]
+    end
+    
+    sp = sortperm(dy, rev = true) # strongest to weakest
+    ks = ks[sp[1:n_knees]]
+
+    return KneedleResult(kr.x_smooth, kr.y_smooth, ks)
+end
+
+function _kneedle_scan_jump(
+    x::AbstractVector{<:Real}, 
+    y::AbstractVector{<:Real},
+    shape::String, 
+    n_knees::Integer)
+
+    @argcheck n_knees == 1 "The `:jump` scan can only find one knee."
+
+    # for the purposes of "jump", ¯| and |_ have the same behavior in that y looks like BIG BIG BIG SMALL SMALL SMALL
+    # the only difference is that the last BIG should be the knee for ¯| and the first SMALL should be the knee for |_
+    # similarly, _|  and |¯  look like SMALL SMALL SMALL BIG BIG BIG
+    # so the last SMALL should be the knee for _| and the first BIG should be the knee for |¯
+
+    small2big = ["_|", "convex_inc", "|¯", "concave_inc"]
+
+    dy = [y[i + 1] - y[i] for i = 1:length(y)-1]
+    sp = sortperm(dy, rev = shape ∈ small2big) |> first
+
+    if shape ∈ ["|_", "convex_dec", "|¯", "concave_inc"]
+        sp += 1
+    end
+
+    return KneedleResult(collect(x), collect(y), [x[sp]])
+end
+
+# find a given number of knees by searches
 function kneedle(
     x::AbstractVector{<:Real}, 
     y::AbstractVector{<:Real},
@@ -344,11 +406,15 @@ function kneedle(
 
     @argcheck n_knees >= 1 
     @argcheck n_knees < length(x)/3 "Too many knees!"
-    @argcheck scan_type ∈ [:S, :smoothing]
+    @argcheck scan_type ∈ [:S, :smoothing, :strength, :jump]
 
     if scan_type == :S
         return _kneedle_scan_S(x, y, shape, n_knees, smoothing = smoothing)
     elseif scan_type == :smoothing
         return _kneedle_scan_smooth(x, y, shape, n_knees, S = S)
+    elseif scan_type == :strength
+        return _kneedle_scan_strength(x, y, shape, n_knees, S = S, smoothing = smoothing)
+    elseif scan_type == :jump
+        return _kneedle_scan_jump(x, y, shape, n_knees)
     end
 end

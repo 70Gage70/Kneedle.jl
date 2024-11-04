@@ -1,7 +1,7 @@
 name = "Kneedle"
 uuid = "4ef9287f-f14a-4b13-b4c1-9bb5ae54399a"
 authors = ["Gage Bonner <gage.bonner@gmail.com>"]
-version = "0.1.1"
+version = "0.1.2"
 
 [deps]
 ArgCheck = "dce04be8-c92d-5529-be00-80e4d2c0e197"
