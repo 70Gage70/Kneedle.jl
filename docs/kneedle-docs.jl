@@ -1,13 +1,14 @@
 ### A Pluto.jl notebook ###
-# v0.20.3
+# v0.20.19
 
 using Markdown
 using InteractiveUtils
 
 # ╔═╡ 120250f8-5689-443d-bf99-dca7e1b41a82
+# ╠═╡ show_logs = false
 begin
 	import Pkg
-	# Pkg.develop(path = "/Users/gagebonner/Desktop/Repositories/Kneedle.jl/")
+	# Pkg.develop(path = "/Users/gbonner/Desktop/Repositories/Kneedle.jl/")
 	Pkg.add(url="https://github.com/70Gage70/Kneedle.jl", rev="master")
 	Pkg.add([
 		"CairoMakie", 
@@ -424,20 +425,25 @@ md"""
 ---
 """
 
-# ╔═╡ ae55f28c-7aac-11ef-0320-f11cdad35bfe
+# ╔═╡ b1c6f598-17df-4d9a-a3e4-2e21addd1ed1
 md"""
-# Utilities
+# End of Documentation
 """
 
+# ╔═╡ ae55f28c-7aac-11ef-0320-f11cdad35bfe
+# md"""
+# # Utilities
+# """
+
 # ╔═╡ 53873f99-598e-4136-affa-572f4ee2d4d3
-md"""
-!!! danger ""
-	This section contains tools to ensure the documentation works correctly; it is not part of the documentation itself.
-"""
+# md"""
+# !!! danger ""
+# 	This section contains tools to ensure the documentation works correctly; it is not part of the documentation itself.
+# """
 
 # ╔═╡ edd49b23-42bc-41cf-bfef-e1538fcdd924
 begin
-	@info "Setting notebook width."
+	# @info "Setting notebook width."
 	html"""
 	<style>
 		main {
@@ -451,34 +457,34 @@ begin
 end
 
 # ╔═╡ 269ad618-ce01-4d06-b0ce-e01a60dedfde
-HTML("""
-<!-- the wrapper span -->
-<div>
-	<button id="myrestart" href="#">Restart</button>
+# HTML("""
+# <!-- the wrapper span -->
+# <div>
+# 	<button id="myrestart" href="#">Restart</button>
 	
-	<script>
-		const div = currentScript.parentElement
-		const button = div.querySelector("button#myrestart")
-		const cell= div.closest('pluto-cell')
-		console.log(button);
-		button.onclick = function() { restart_nb() };
-		function restart_nb() {
-			console.log("Restarting Notebook");
-		        cell._internal_pluto_actions.send(                    
-		            "restart_process",
-                            {},
-                            {
-                                notebook_id: editor_state.notebook.notebook_id,
-                            }
-                        )
-		};
-	</script>
-</div>
-""")
+# 	<script>
+# 		const div = currentScript.parentElement
+# 		const button = div.querySelector("button#myrestart")
+# 		const cell= div.closest('pluto-cell')
+# 		console.log(button);
+# 		button.onclick = function() { restart_nb() };
+# 		function restart_nb() {
+# 			console.log("Restarting Notebook");
+# 		        cell._internal_pluto_actions.send(                    
+# 		            "restart_process",
+#                             {},
+#                             {
+#                                 notebook_id: editor_state.notebook.notebook_id,
+#                             }
+#                         )
+# 		};
+# 	</script>
+# </div>
+# """)
 
 # ╔═╡ a35b1234-a722-442b-8969-7635a28556ff
 begin
-	@info "Defining data"
+	# @info "Defining data"
 	
 	λs = [0.1, 0.14384498882876628, 0.20691380811147897, 0.29763514416313186, 0.4281332398719394, 0.6158482110660264, 0.8858667904100826, 1.2742749857031337, 1.8329807108324359, 2.636650898730358, 3.79269019073225, 5.455594781168519, 7.847599703514613, 11.28837891684689, 16.237767391887218, 23.357214690901223, 33.59818286283783, 48.32930238571752, 69.51927961775606, 100.0]
 	errs = [10.934290106930245, 10.83733683826938, 11.017433337213713, 11.124893613300706, 11.119853842082296, 11.099548594837454, 11.03789948291263, 16.205849291523638, 16.206016168361213, 16.204933621558062, 16.205591636093704, 16.205684051603743, 16.20568226625062, 16.228735841057354, 16.23024949820953, 16.23017241763306, 16.229714642370798, 16.22987500373123, 16.229503091439568, 16.230329157796838]
@@ -591,6 +597,7 @@ end
 # ╟─5428c5da-0111-4d97-8b3d-71a78b6b9d7d
 # ╟─9ec18ec5-1aae-4689-b7f1-693d52cdec5b
 # ╟─90ce7418-2a74-433b-9ae9-ca87e2b48027
+# ╟─b1c6f598-17df-4d9a-a3e4-2e21addd1ed1
 # ╟─384711a6-d7cb-4d69-a790-2f3d808aa5d8
 # ╟─ae55f28c-7aac-11ef-0320-f11cdad35bfe
 # ╟─53873f99-598e-4136-affa-572f4ee2d4d3
