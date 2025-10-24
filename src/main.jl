@@ -11,8 +11,8 @@ See the `kneedle` function for further general information.
 
 ### Fields 
 
-- `x_smooth`: The smoothed `x` points.
-- `y_smooth`: The smoothed `y` points.
+- `x_smooth`: The smoothed `x` points. Equal to the input `x` points if no smoothing was used.
+- `y_smooth`: The smoothed `y` points. Equal to the input `y` points if no smoothing was used.
 - `knees`: The a vector of `x` coordinates of the computed knees/elbows.
 """
 struct KneedleResult{X<:Real}
@@ -81,12 +81,21 @@ This function finds knees/elbows with the given `shape`.
 
 This function finds exactly `n_knees` knees/elbows with the given `shape`.
 
-There are three options for `scan_type`.
+There are five total options for `scan_type`. Two of these use bisection with the core kneedle algorithm:
 
 - `:S`: Bisect by varying `S` (with a given `smoothing`.)
 - `:smoothing`: Bisect by varying `smoothing` (with a given `S`.)
+
+Two options search for knees by looking at differences in `x` and `y` individually:
+
 - `:strength`: Sort knees by "strength" (size of the jump to adjacent points) and take the strongest.
 - `:jump`: Find 1 knee by looking for the single biggest jump in `y`. Applies no smoothing.
+
+One option which formulates an optimization problem:
+
+- `:tri`: This method regresses `(x, y)` onto a piecewise linear function with three segments to \
+find exactly 1 knee of a given shape. To use this method, the package `BlackBoxOptim` must be \
+loaded by running `import BlackBoxOptim`.
 
 ## Examples
 
@@ -387,12 +396,15 @@ function _kneedle_scan_jump(
     dy = [y[i + 1] - y[i] for i = 1:length(y)-1]
     sp = sortperm(dy, rev = shape ∈ small2big) |> first
 
-    if shape ∈ ["|_", "convex_dec", "|¯", "concave_inc"]
+    if shape ∈ ["|_", "convex_dec", "¯|", "concave_dec"]
         sp += 1
     end
 
     return KneedleResult(collect(x), collect(y), [x[sp]])
 end
+
+# for KneedleBBOExt
+function _kneedle_scan_opt end
 
 # find a given number of knees by searches
 function kneedle(
@@ -406,7 +418,7 @@ function kneedle(
 
     @argcheck n_knees >= 1 
     @argcheck n_knees < length(x)/3 "Too many knees!"
-    @argcheck scan_type ∈ [:S, :smoothing, :strength, :jump]
+    @argcheck scan_type ∈ [:S, :smoothing, :strength, :jump, :tri]
 
     if scan_type == :S
         return _kneedle_scan_S(x, y, shape, n_knees, smoothing = smoothing)
@@ -416,5 +428,13 @@ function kneedle(
         return _kneedle_scan_strength(x, y, shape, n_knees, S = S, smoothing = smoothing)
     elseif scan_type == :jump
         return _kneedle_scan_jump(x, y, shape, n_knees)
+    elseif scan_type == :tri
+        ext = Base.get_extension(Kneedle, :KneedleBBOExt)
+
+        if isnothing(ext)
+            @error "Must load BlackBoxOptim package to use the :tri algorithm: import BlackBoxOptim"
+        else
+            return _kneedle_scan_opt(x, y, shape, n_knees)
+        end
     end
 end

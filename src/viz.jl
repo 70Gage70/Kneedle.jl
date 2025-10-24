@@ -24,7 +24,17 @@ julia> kr = kneedle(x, y);
 julia> viz(x, y, kr)
 ```
 """
-function viz end
+function viz()
+    ext = Base.get_extension(Kneedle, :KneedleMakieExt)
+
+    if isnothing(ext)
+        @error "It is required to load a Makie package to use this function. For example: import CairoMakie"
+    else
+        @error "A Makie package is loaded. Type ?viz or @doc(viz) for documentation."
+    end
+
+    return nothing
+end
 
 """
     viz!(ax, x, y, kneedle_result; show_data = true, show_data_smoothed = true, show_knees = true, linewidth = 2.0)

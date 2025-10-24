@@ -8,10 +8,11 @@ using InteractiveUtils
 # ╠═╡ show_logs = false
 begin
 	import Pkg
-	# Pkg.develop(path = "/Users/gbonner/Desktop/Repositories/Kneedle.jl/")
-	Pkg.add(url="https://github.com/70Gage70/Kneedle.jl", rev="master")
+	Pkg.develop(path = "/Users/gbonner/Desktop/Repositories/Kneedle.jl/")
+	# Pkg.add(url="https://github.com/70Gage70/Kneedle.jl", rev="master")
 	Pkg.add([
 		"CairoMakie", 
+		"BlackBoxOptim",
 		"PlutoUI"])
 	using PlutoUI
 	import Random
@@ -22,6 +23,10 @@ using Kneedle
 
 # ╔═╡ efaedc36-961b-4476-9a72-cca18ac7f385
 using CairoMakie
+
+# ╔═╡ a052e378-a475-4432-9a7f-69182ab2f975
+# ╠═╡ show_logs = false
+using BlackBoxOptim
 
 # ╔═╡ 1d5ffaa0-224b-4587-b7ae-859a26512cc3
 md"""
@@ -373,6 +378,29 @@ md"""
 In cases such as this with one large jump, the `:jump` scan type will outperform the stock kneedle algorithm.
 """
 
+# ╔═╡ d55a1989-3f50-4564-8a7f-7751f6c33724
+md"""
+## Three-segment knee finding
+"""
+
+# ╔═╡ b8c3c3cd-3106-4d91-9b2b-b3ae7abb2ce6
+md"""
+`Kneedle.jl` includes one additional algorithm which formulates an optimization problem. This method regresses `(x, y)` onto a piecewise linear function with three segments, and then applies the core kneedle algorithm on the resulting data. This is a kind of smoothing that may have better performance for "jumpy" data. To acceess the algorithm, the package [BlackBoxOptim.jl](https://github.com/robertfeldt/BlackBoxOptim.jl) must be loaded:
+"""
+
+# ╔═╡ f9b0ddf5-d5d9-46ee-ace5-92f5e32cb17e
+md"""
+We can use `scan_type = :tri` to use this algorithm, ensuring to set the number of knees to `1`. We see that this algorithm accurately solves all of the previous problems at the expense of speed. Solving the optimization problem is somewhat slower than the core kneedle algorithm.
+"""
+
+# ╔═╡ d59cea7e-6031-4a66-aaa1-a198646b1747
+let
+	Random.seed!(1234)
+	kr = kneedle(x_1noise_high, y_1noise_high, "|¯", 1, scan_type = :tri)
+	@info knees(kr)
+	viz(x_1noise_high, y_1noise_high, kr, show_data_smoothed=true)
+end
+
 # ╔═╡ b60e5d82-8ba6-4bd3-a471-5fec6353da69
 md"""
 # Docstrings
@@ -418,16 +446,16 @@ md"""
 [^1]: Satopaa, Ville, et al. *Finding a "kneedle" in a haystack: Detecting knee points in system behavior.* 2011 31st international conference on distributed computing systems workshops. IEEE, 2011.
 """
 
+# ╔═╡ b1c6f598-17df-4d9a-a3e4-2e21addd1ed1
+md"""
+# End of Documentation
+"""
+
 # ╔═╡ 384711a6-d7cb-4d69-a790-2f3d808aa5d8
 md"""
 ---
 ---
 ---
-"""
-
-# ╔═╡ b1c6f598-17df-4d9a-a3e4-2e21addd1ed1
-md"""
-# End of Documentation
 """
 
 # ╔═╡ ae55f28c-7aac-11ef-0320-f11cdad35bfe
@@ -457,30 +485,30 @@ begin
 end
 
 # ╔═╡ 269ad618-ce01-4d06-b0ce-e01a60dedfde
-# HTML("""
-# <!-- the wrapper span -->
-# <div>
-# 	<button id="myrestart" href="#">Restart</button>
+HTML("""
+<!-- the wrapper span -->
+<div>
+	<button id="myrestart" href="#">Restart</button>
 	
-# 	<script>
-# 		const div = currentScript.parentElement
-# 		const button = div.querySelector("button#myrestart")
-# 		const cell= div.closest('pluto-cell')
-# 		console.log(button);
-# 		button.onclick = function() { restart_nb() };
-# 		function restart_nb() {
-# 			console.log("Restarting Notebook");
-# 		        cell._internal_pluto_actions.send(                    
-# 		            "restart_process",
-#                             {},
-#                             {
-#                                 notebook_id: editor_state.notebook.notebook_id,
-#                             }
-#                         )
-# 		};
-# 	</script>
-# </div>
-# """)
+	<script>
+		const div = currentScript.parentElement
+		const button = div.querySelector("button#myrestart")
+		const cell= div.closest('pluto-cell')
+		console.log(button);
+		button.onclick = function() { restart_nb() };
+		function restart_nb() {
+			console.log("Restarting Notebook");
+		        cell._internal_pluto_actions.send(                    
+		            "restart_process",
+                            {},
+                            {
+                                notebook_id: editor_state.notebook.notebook_id,
+                            }
+                        )
+		};
+	</script>
+</div>
+""")
 
 # ╔═╡ a35b1234-a722-442b-8969-7635a28556ff
 begin
@@ -520,6 +548,28 @@ let
 	log10λs = log10.(λs_jump)
 	kr = kneedle(log10λs, errs_jump, "_|", 1, scan_type = :jump)
 	viz!(ax, log10λs, errs_jump, kr, show_data_smoothed=false)
+	Legend(fig[2, 1], ax, orientation = :horizontal, merge = true)
+	fig
+end
+
+# ╔═╡ f2026780-e480-422f-a90b-373d3883d7d5
+let
+	Random.seed!(1234)
+	fig = Figure(); ax = Axis(fig[1, 1], xlabel = L"\log_{10} \, \lambda", ylabel = "error")
+	log10λs = log10.(λs)
+	kr = kneedle(log10λs, errs, "_|", 1, scan_type = :tri)
+	viz!(ax, log10λs, errs, kr, show_data_smoothed=true)
+	Legend(fig[2, 1], ax, orientation = :horizontal)
+	fig
+end
+
+# ╔═╡ c4172294-3317-42e7-b922-e9d4edd24830
+let
+	Random.seed!(1234)
+	fig = Figure(); ax = Axis(fig[1, 1], xlabel = L"\log_{10} \, \lambda", ylabel = "error")
+	log10λs = log10.(λs_jump)
+	kr = kneedle(log10λs, errs_jump, "_|", 1, scan_type = :tri)
+	viz!(ax, log10λs, errs_jump, kr, show_data_smoothed=true)
 	Legend(fig[2, 1], ax, orientation = :horizontal, merge = true)
 	fig
 end
@@ -584,6 +634,13 @@ end
 # ╠═00f2a928-a6aa-4a78-a9fe-e74202c2ce36
 # ╟─4bd3b4ac-2994-4f9f-954b-c60d4d83716c
 # ╠═8e0ac392-362d-4e08-9c78-3d4362142a16
+# ╟─d55a1989-3f50-4564-8a7f-7751f6c33724
+# ╟─b8c3c3cd-3106-4d91-9b2b-b3ae7abb2ce6
+# ╠═a052e378-a475-4432-9a7f-69182ab2f975
+# ╟─f9b0ddf5-d5d9-46ee-ace5-92f5e32cb17e
+# ╠═d59cea7e-6031-4a66-aaa1-a198646b1747
+# ╠═f2026780-e480-422f-a90b-373d3883d7d5
+# ╠═c4172294-3317-42e7-b922-e9d4edd24830
 # ╟─b60e5d82-8ba6-4bd3-a471-5fec6353da69
 # ╟─1a6cfb27-b5d6-46b3-8f48-399fae9247c3
 # ╟─faaf42c4-e817-441c-b3db-8ec562e15323
