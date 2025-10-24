@@ -8,8 +8,8 @@ using InteractiveUtils
 # ╠═╡ show_logs = false
 begin
 	import Pkg
-	Pkg.develop(path = "/Users/gbonner/Desktop/Repositories/Kneedle.jl/")
-	# Pkg.add(url="https://github.com/70Gage70/Kneedle.jl", rev="master")
+	# Pkg.develop(path = "/Users/gbonner/Desktop/Repositories/Kneedle.jl/")
+	Pkg.add(url="https://github.com/70Gage70/Kneedle.jl", rev="master")
 	Pkg.add([
 		"CairoMakie", 
 		"BlackBoxOptim",
