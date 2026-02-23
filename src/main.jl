@@ -172,10 +172,6 @@ function _kneedle(
 
 	### STEP 4: CANDIDATE LOCAL MAXIMA
 	lmx = [i for i in 2:n-1 if (y_d[i - 1] < y_d[i]) && (y_d[i] > y_d[i + 1])]
-	
-	if length(lmx) == 1
-        return KneedleResult(collect(float(x_s)), collect(float(y_s)), [x[lmx[1]]])
-	end
 
 	knees_res = eltype(x)[]
 	
