@@ -30,14 +30,14 @@ function _y_tri(x::Real; params::AbstractVector{<:Real})
 end 
 
 # """
-# 	_get_k1k2(x, y; bboptimize_Method)
+# 	_get_k1k2(x, y; bboptimize_method)
 
 # Regress the `(x, y)` data onto `_y_tri` and return `(bf, yhat)`.
 # """
 function _get_k1k2(
     x::AbstractVector{<:Real}, 
     y::AbstractVector{<:Real}; 
-    bboptimize_Method::Symbol)
+    bboptimize_method::Symbol)
 
 	x_min = minimum(x)
 	x_scaled = x .- x_min
@@ -64,7 +64,7 @@ function _get_k1k2(
 				(0.0, 1.0), # k1
 				(0.0, 1.0), # k2
 			],
-			Method = bboptimize_Method,
+			Method = bboptimize_method,
 			TraceMode = :silent
 	)
 	
@@ -80,40 +80,40 @@ function _get_k1k2(
 	return (bf, yhat)
 end
 
-# LOOP OVER THIS 10 TIMES AND TAKE BEST\
 
 # find a knee by regressing the data onto a piecewise linear function
-function Kneedle._kneedle_scan_opt(
+function Kneedle._kneedle_scan(
     x::AbstractVector{<:Real}, 
     y::AbstractVector{<:Real}, 
     shape::String, 
-    n_knees::Integer; 
-    bboptimize_Method::Symbol = :adaptive_de_rand_1_bin_radiuslimited,
-	niters::Integer = 100)
+    n_knees::Integer,
+    kneedle_scan_algorithm::ScanTri)
 
-	# also try :resampling_inheritance_memetic_search, but quite slow
+    bboptimize_method = kneedle_scan_algorithm.bboptimize_method
+    niters = kneedle_scan_algorithm.niters
 	
     @argcheck length(x) == length(y) > 0
     @argcheck issorted(x)
     @argcheck shape ∈ ["|¯", "|_", "¯|", "_|"] || shape ∈ ["concave_inc", "convex_dec", "concave_dec", "convex_inc"]
-	@argcheck n_knees == 1 "The `:tri` scan can only find one knee."
+	@argcheck n_knees == 1 "`ScanTri` can only find one knee."
 
 	bf = Inf
 	yhat = nothing
 	for _ = 1:niters
-		_bf, _yhat = _get_k1k2(x, y; bboptimize_Method = bboptimize_Method)
+		_bf, _yhat = _get_k1k2(x, y; bboptimize_method = bboptimize_method)
 		if _bf < bf
+			bf = _bf
 			yhat = _yhat
 		end
 	end 
 
-	return Kneedle.kneedle(Float64.(collect(x)), Float64.(collect(yhat)), shape, n_knees, scan_type=:S)
+	return Kneedle.kneedle(Float64.(collect(x)), Float64.(collect(yhat)), shape, n_knees, kneedle_scan_algorithm=Kneedle.ScanSensitivity())
 end 
 
 @compile_workload begin
     Random.seed!(1234)
     x, y = Testers.CONVEX_INC
-    Kneedle._kneedle_scan_opt(x, y, "convex_inc", 1)
+    Kneedle.kneedle(x, y, "convex_inc", 1, kneedle_scan_algorithm = ScanTri())
 end
 
 end # module

@@ -41,12 +41,15 @@ Refer to `viz` for visualization.
 
 Each `kneedle` function contains the args `x` and `y` which refer to the input data. It is required that `x` is sorted.
 
-Each `kneedle` function contains the kwargs `S` and `smoothing`. `S > 0` refers to the sensitivity of the knee/elbow \
-detection algorithm in the sense that higher `S` results in fewer detections. `smoothing` refers to the amount of \
-smoothing via interpolation that is applied to the data before knee detection. If `smoothing == nothing`, it will \
-be bypassed entirely. If `smoothing ∈ [0, 1]`, this parameter is passed directly to \
+The two- and three-argument methods accept the kwargs `S` and `smoothing` directly. `S > 0` refers to the sensitivity \
+of the knee/elbow detection algorithm in the sense that higher `S` results in fewer detections. `smoothing` refers to \
+the amount of smoothing via interpolation that is applied to the data before knee detection. If `smoothing == nothing`, \
+it will be bypassed entirely. If `smoothing ∈ [0, 1]`, this parameter is passed directly to \
 [Loess.jl](https://github.com/JuliaStats/Loess.jl) via its `span` parameter. Generally, higher `smoothing` results \
 in less detection.
+
+The four-argument method instead accepts a `kneedle_scan_algorithm` keyword — see the \
+"Kneedle with a specific shape and number of knees" section below.
 
 ## Shapes
 
@@ -77,25 +80,20 @@ This function finds knees/elbows with the given `shape`.
 
 ### Kneedle with a specific shape and number of knees
 
-    kneedle(x, y, shape, n_knees; scan_type = :S, S = 1.0, smoothing = nothing)
+    kneedle(x, y, shape, n_knees; kneedle_scan_algorithm = ScanSensitivity())
 
 This function finds exactly `n_knees` knees/elbows with the given `shape`.
 
-There are five total options for `scan_type`. Two of these use bisection with the core kneedle algorithm:
+The `kneedle_scan_algorithm` keyword accepts a `KneedleScanAlgorithm` subtype. There are five options:
 
-- `:S`: Bisect by varying `S` (with a given `smoothing`.)
-- `:smoothing`: Bisect by varying `smoothing` (with a given `S`.)
+- `ScanSensitivity(; smoothing = nothing)`: Bisect by varying `S` (with a fixed `smoothing`.)
+- `ScanSmoothing(; S = 1.0)`: Bisect by varying `smoothing` (with a fixed `S`.)
+- `ScanStrength(; S = 1.0, smoothing = nothing)`: Sort knees by strength and take the strongest.
+- `ScanJump()`: Find 1 knee by looking for the single biggest jump in `y`. Applies no smoothing.
+- `ScanTri(; bboptimize_method = :adaptive_de_rand_1_bin_radiuslimited, niters = 100)`: \
+Fit a piecewise linear function to find 1 knee. Requires `import BlackBoxOptim`.
 
-Two options search for knees by looking at differences in `x` and `y` individually:
-
-- `:strength`: Sort knees by "strength" (size of the jump to adjacent points) and take the strongest.
-- `:jump`: Find 1 knee by looking for the single biggest jump in `y`. Applies no smoothing.
-
-One option which formulates an optimization problem:
-
-- `:tri`: This method regresses `(x, y)` onto a piecewise linear function with three segments to \
-find exactly 1 knee of a given shape. To use this method, the package `BlackBoxOptim` must be \
-loaded by running `import BlackBoxOptim`.
+See the docstrings of each `KneedleScanAlgorithm` subtype for details.
 
 ## Examples
 
@@ -104,7 +102,7 @@ Find a knee:
 ```julia-repl
 julia> x, y = Testers.CONCAVE_INC
 julia> kr1 = kneedle(x, y)
-julia> knees(kr1) # 2, meaning that there is a knee at `x = 2`
+julia> knees(kr1) # [2], meaning that there is a knee at `x = 2`
 ```
 
 Find a knee with a specific shape:
@@ -127,6 +125,16 @@ Find a given number of knees:
 julia> x, y = Testers.double_bump(noise_level = 0.3)
 julia> kr4 = kneedle(x, y, "|¯", 2)
 julia> length(knees(kr4)) # 2, meaning that the algorithm found 2 knees
+```
+
+Find a given number of knees with a different scanning algorithm:
+
+```julia-repl
+julia> x, y = Testers.double_bump(noise_level = 0.3)
+julia> ksa = ScanSmoothing()
+julia> kr5 = kneedle(x, y, "|¯", 2, kneedle_scan_algorithm = ksa)
+julia> length(knees(kr5)) # 2, meaning that the algorithm found 2 knees
+julia> knees(kr5) == knees(kr4) # false (algorithms are not equivalent in general)
 ```
 """
 function kneedle end
@@ -251,13 +259,37 @@ function kneedle(
     end
 end
 
-# use bisection to find a given number of knees by varying the sensitivity
-function _kneedle_scan_S(
+"""
+    abstract type KneedleScanAlgorithm
+        
+Abstract type for scanning algorithms -- algorithms that attempt to find specific numbers of knees.
+"""
+abstract type KneedleScanAlgorithm end 
+
+"""
+    struct ScanSensitivity
+        
+Attempt to find a given number of knees by applying bisection on the kneedle `S` ("sensitivity") parameter.
+
+### Constructor
+
+    ScanSensitivity(; smoothing = nothing)
+
+The `smoothing` parameter is held to this constant value during the bisection.
+"""
+@kwdef struct ScanSensitivity{T<:Union{<:Real, Nothing}} <: KneedleScanAlgorithm
+    smoothing::T = nothing
+end
+
+
+function _kneedle_scan(
     x::AbstractVector{<:Real}, 
     y::AbstractVector{<:Real},
     shape::String, 
-    n_knees::Integer; 
-    smoothing::Union{Real, Nothing} = nothing)
+    n_knees::Integer,
+    kneedle_scan_algorithm::ScanSensitivity)
+
+    smoothing = kneedle_scan_algorithm.smoothing
 
     # usually, higher S means less knees; define 1/s here since easier to keep track of
     _n_knees(s) = kneedle(x, y, shape, S = 1/s, smoothing = smoothing) |> x -> length(knees(x))
@@ -267,7 +299,7 @@ function _kneedle_scan_S(
         lb = lb/2
         n_iters += 1
         if n_iters == 10
-            error("Could not find the requested number of knees (requested too few).")
+            throw(ArgumentError("Could not find the requested number of knees (requested too few)."))
         end
     end
 
@@ -276,7 +308,7 @@ function _kneedle_scan_S(
         ub = ub*2
         n_iters += 1
         if n_iters == 10
-            error("Could not find the requested number of knees (requested too many.)")
+            throw(ArgumentError("Could not find the requested number of knees (requested too many)."))
         end
     end
 
@@ -300,16 +332,37 @@ function _kneedle_scan_S(
         end
     end
 
-    return kneedle(x, y, shape, S = 1/c, smoothing = smoothing)
+    result = kneedle(x, y, shape, S = 1/c, smoothing = smoothing)
+    if length(knees(result)) != n_knees
+        throw(ArgumentError("Bisection did not converge to the requested number of knees."))
+    end
+    return result
+end
+
+"""
+    struct ScanSmoothing
+        
+Attempt to find a given number of knees by applying bisection on the kneedle `smoothing` parameter.
+
+### Constructor
+
+    ScanSmoothing(; S = 1.0)
+
+The `S` parameter is held to this constant value during the bisection.
+"""
+@kwdef struct ScanSmoothing{T<:Real} <: KneedleScanAlgorithm
+    S::T = 1.0
 end
 
 # use bisection to find a given number of knees by varying the smoothing
-function _kneedle_scan_smooth(
+function _kneedle_scan(
     x::AbstractVector{<:Real}, 
     y::AbstractVector{<:Real},
     shape::String, 
-    n_knees::Integer; 
-    S::Real = 1.0)
+    n_knees::Integer, 
+    kneedle_scan_algorithm::ScanSmoothing)
+
+    S = kneedle_scan_algorithm.S
 
     # usually, higher smoothing means less knees; define 1/s here since easier to keep track of
     _n_knees(s) = kneedle(x, y, shape, S = S, smoothing = 1/s) |> x -> length(knees(x))
@@ -319,14 +372,14 @@ function _kneedle_scan_smooth(
         ub = ub*2
         n_iters += 1
         if n_iters == 10
-            error("Could not find the requested number of knees (requested too many).")
+            throw(ArgumentError("Could not find the requested number of knees (requested too many)."))
         end
     end
 
     a, b = 1.0, ub
     c = (a + b)/2
     n_iter = 0
-    
+
     # bisection
     while _n_knees(c) != n_knees
         if _n_knees(c) - n_knees > 0
@@ -334,32 +387,54 @@ function _kneedle_scan_smooth(
         else
             a = c
         end
-        
+
         c = (a + b)/2
         n_iter += 1
-    
+
         if n_iter >= 20
             break
         end
     end
 
-    return kneedle(x, y, shape, S = S, smoothing = 1/c)
+    result = kneedle(x, y, shape, S = S, smoothing = 1/c)
+    if length(knees(result)) != n_knees
+        throw(ArgumentError("Bisection did not converge to the requested number of knees."))
+    end
+    return result
+end
+
+"""
+    struct ScanStrength
+        
+Sort knees by "strength" (size of the jump to adjacent points) and take the strongest.
+
+### Constructor
+
+    ScanStrength(; S = 1.0, smoothing = nothing)
+
+The `S` and `smoothing` parameters passed to the core kneedle algorithm.
+"""
+@kwdef struct ScanStrength{T<:Real, R<:Union{<:Real, Nothing}} <: KneedleScanAlgorithm
+    S::T = 1.0
+    smoothing::R = nothing
 end
 
 # sort the knees by "strength" (size of y differences) and take the largest given number
-function _kneedle_scan_strength(
+function _kneedle_scan(
     x::AbstractVector{<:Real}, 
     y::AbstractVector{<:Real},
     shape::String, 
-    n_knees::Integer; 
-    S::Real = 1.0,
-    smoothing::Union{Real, Nothing} = nothing)
+    n_knees::Integer,
+    kneedle_scan_algorithm::ScanStrength)
+
+    S = kneedle_scan_algorithm.S
+    smoothing = kneedle_scan_algorithm.smoothing
 
     kr = kneedle(x, y, shape, S = S, smoothing = smoothing)
     ks = knees(kr)
 
     if length(ks) < n_knees
-        error("Could not find the requested number of knees (requested too many).")
+        throw(ArgumentError("Could not find the requested number of knees (requested too many)."))
     end
 
     kn_idxs = [findfirst(p -> abs(p - k) < 1e-10, x) for k in ks]
@@ -378,13 +453,27 @@ function _kneedle_scan_strength(
     return KneedleResult(kr.x_smooth, kr.y_smooth, ks)
 end
 
-function _kneedle_scan_jump(
+"""
+    struct ScanJump
+        
+Find 1 knee by looking for the single biggest jump in `y`. Applies no smoothing.
+
+### Constructor
+
+    ScanJump()
+
+Takes no arguments.
+"""
+struct ScanJump <: KneedleScanAlgorithm end
+
+function _kneedle_scan(
     x::AbstractVector{<:Real}, 
     y::AbstractVector{<:Real},
     shape::String, 
-    n_knees::Integer)
+    n_knees::Integer,
+    kneedle_scan_algorithm::ScanJump)
 
-    @argcheck n_knees == 1 "The `:jump` scan can only find one knee."
+    @argcheck n_knees == 1 "`ScanJump` can only find one knee."
 
     # for the purposes of "jump", ¯| and |_ have the same behavior in that y looks like BIG BIG BIG SMALL SMALL SMALL
     # the only difference is that the last BIG should be the knee for ¯| and the first SMALL should be the knee for |_
@@ -400,11 +489,30 @@ function _kneedle_scan_jump(
         sp += 1
     end
 
-    return KneedleResult(collect(x), collect(y), [x[sp]])
+    return KneedleResult(collect(float(x)), collect(float(y)), [x[sp]])
 end
 
-# for KneedleBBOExt
-function _kneedle_scan_opt end
+
+"""
+    struct ScanTri
+        
+This method regresses `(x, y)` onto a piecewise linear function with three segments to \
+find exactly 1 knee of a given shape. To use this method, the package [`BlackBoxOptim`](https://github.com/robertfeldt/BlackBoxOptim.jl) \
+must be loaded by running `import BlackBoxOptim`.
+
+### Constructor
+
+    ScanTri(; bboptimize_method::Symbol = :adaptive_de_rand_1_bin_radiuslimited, niters = 100)
+
+- `bboptimize_method`: The optimization algorithm to use. `:adaptive_de_rand_1_bin_radiuslimited` is a strong default; \
+consider `:resampling_inheritance_memetic_search` as well, but it is somewhat slower.
+- `niters`: The number of iterations in the optimizer.
+"""
+@kwdef struct ScanTri <: KneedleScanAlgorithm
+    bboptimize_method::Symbol = :adaptive_de_rand_1_bin_radiuslimited
+    niters::Int = 100
+end
+
 
 # find a given number of knees by searches
 function kneedle(
@@ -412,29 +520,14 @@ function kneedle(
     y::AbstractVector{<:Real},
     shape::String, 
     n_knees::Integer; 
-    scan_type::Symbol = :S,
-    S::Real = 1.0,
-    smoothing::Union{Real, Nothing} = nothing)
+    kneedle_scan_algorithm::KneedleScanAlgorithm = ScanSensitivity())
 
     @argcheck n_knees >= 1 
     @argcheck n_knees < length(x)/3 "Too many knees!"
-    @argcheck scan_type ∈ [:S, :smoothing, :strength, :jump, :tri]
-
-    if scan_type == :S
-        return _kneedle_scan_S(x, y, shape, n_knees, smoothing = smoothing)
-    elseif scan_type == :smoothing
-        return _kneedle_scan_smooth(x, y, shape, n_knees, S = S)
-    elseif scan_type == :strength
-        return _kneedle_scan_strength(x, y, shape, n_knees, S = S, smoothing = smoothing)
-    elseif scan_type == :jump
-        return _kneedle_scan_jump(x, y, shape, n_knees)
-    elseif scan_type == :tri
-        ext = Base.get_extension(Kneedle, :KneedleBBOExt)
-
-        if isnothing(ext)
-            @error "Must load BlackBoxOptim package to use the :tri algorithm: import BlackBoxOptim"
-        else
-            return _kneedle_scan_opt(x, y, shape, n_knees)
-        end
+    
+    if (kneedle_scan_algorithm isa ScanTri) && isnothing(Base.get_extension(Kneedle, :KneedleBBOExt))
+        error("Must load BlackBoxOptim package to use `ScanTri`: import BlackBoxOptim")
     end
+    
+    return _kneedle_scan(x, y, shape, n_knees, kneedle_scan_algorithm)
 end

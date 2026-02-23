@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.20.19
+# v0.20.20
 
 using Markdown
 using InteractiveUtils
@@ -280,12 +280,25 @@ md"""
 
 # ╔═╡ a2785447-64c0-4d0d-93a7-ac599e3e14fa
 md"""
-To avoid the tedious process of guessing `S` or `smoothing`, one can provide the exact number of knees to search for. This works by bisecting either S (if `scan_type == :S`) or smoothing (if `scan_type == :smoothing`). Instead of finding `smoothing = 0.7` manually as in the last example, we can simply pass `1` knee and `scan_type = :smoothing` to `kneedle:
+To avoid the tedious process of guessing `S` or `smoothing`, one can provide the exact number of knees to search for. This changes the basic function signature to
+
+```
+	kneedle(x, y, shape, n_knees; kneedle_scan_algorithm = ScanSensitivity())
+```
+
+There are 5 `kneedle_scan_algorithm`s available; refer to the documentation at the end of this notebook for details on each one. For now, we will consider the `ScanSensitivity` and `ScanSmoothing` algorithms.
+
+- `ScanSensitivity(; smoothing = nothing)`: Bisect by varying `S` (with a fixed `smoothing`.)
+- `ScanSmoothing(; S = 1.0)`: Bisect by varying `smoothing` (with a fixed `S`.)
+
+Each of these works by bisecting either `S` with a constant `smoothing` (with `ScanSensitivity`) or `smoothing` with a constant `S` (with `ScanSmoothing`). 
+
+Instead of finding `smoothing = 0.7` manually as in the last example, we can simply pass `1` knee and `ScanSmoothing()` to `kneedle`:
 """
 
 # ╔═╡ 8e4755cf-f2aa-41d0-a589-d2653a5154ca
 let
-	kr = kneedle(x_1noise_high, y_1noise_high, "|¯", 1, scan_type = :smoothing)
+	kr = kneedle(x_1noise_high, y_1noise_high, "|¯", 1, kneedle_scan_algorithm = ScanSmoothing())
 	@info knees(kr)
 	viz(x_1noise_high, y_1noise_high, kr, show_data_smoothed=true)
 end
@@ -321,13 +334,13 @@ And again with noise. Keep in mind that for very noisy data we still might have 
 
 # ╔═╡ 0ef236c7-4cf8-424e-b32b-187ee5b71f25
 let
-	kr = kneedle(x_2noise, y_2noise, "|¯", 2, scan_type = :S, smoothing = 0.4)
+	kr = kneedle(x_2noise, y_2noise, "|¯", 2, kneedle_scan_algorithm = ScanSensitivity(smoothing = 0.4))
 	viz(x_2noise, y_2noise, kr)
 end
 
 # ╔═╡ ab8a3ae9-3c3f-4f6d-a4cc-ce23f734e66f
 let
-	kr = kneedle(x_2noise, y_2noise, "|¯", 2, scan_type = :smoothing, S = 0.1)
+	kr = kneedle(x_2noise, y_2noise, "|¯", 2, kneedle_scan_algorithm = ScanSmoothing(S = 0.1))
 	viz(x_2noise, y_2noise, kr)
 end
 
@@ -361,7 +374,7 @@ We see that `kneedle` correctly finds the largest $\lambda$ that has small error
 
 # ╔═╡ c00b2622-36b1-4759-9056-7e4104780b52
 md"""
-Occasionally, a simpler tool is required. In the situation above, all we really needed was the ``x`` coordinate of the largest jump. For these situations, `scan_type = :jump` is provided. Let us consider another sparse regression problem.
+Occasionally, a simpler tool is required. In the situation above, all we really needed was the ``x`` coordinate of the largest jump. For these situations, `ScanJump()` is provided. Let us consider another sparse regression problem.
 """
 
 # ╔═╡ 2fa7cec0-5305-49e7-a723-1cf78ab1e99e
@@ -375,7 +388,7 @@ errs_jump = [0.34630490893779403, 0.3456230803320486, 0.34629815348076226, 0.345
 
 # ╔═╡ 4bd3b4ac-2994-4f9f-954b-c60d4d83716c
 md"""
-In cases such as this with one large jump, the `:jump` scan type will outperform the stock kneedle algorithm.
+In cases such as this with one large jump, the `ScanJump()` algorithm will outperform the stock kneedle algorithm.
 """
 
 # ╔═╡ d55a1989-3f50-4564-8a7f-7751f6c33724
@@ -390,13 +403,13 @@ md"""
 
 # ╔═╡ f9b0ddf5-d5d9-46ee-ace5-92f5e32cb17e
 md"""
-We can use `scan_type = :tri` to use this algorithm, ensuring to set the number of knees to `1`. We see that this algorithm accurately solves all of the previous problems at the expense of speed. Solving the optimization problem is somewhat slower than the core kneedle algorithm.
+We can use `ScanTri()` to use this algorithm, ensuring to set the number of knees to `1`. We see that this algorithm accurately solves all of the previous problems at the expense of speed. Solving the optimization problem is somewhat slower than the core kneedle algorithm.
 """
 
 # ╔═╡ d59cea7e-6031-4a66-aaa1-a198646b1747
 let
 	Random.seed!(1234)
-	kr = kneedle(x_1noise_high, y_1noise_high, "|¯", 1, scan_type = :tri)
+	kr = kneedle(x_1noise_high, y_1noise_high, "|¯", 1, kneedle_scan_algorithm = ScanTri())
 	@info knees(kr)
 	viz(x_1noise_high, y_1noise_high, kr, show_data_smoothed=true)
 end
@@ -414,6 +427,21 @@ details("KneedleResult", @doc KneedleResult)
 
 # ╔═╡ 975a39fa-f4ad-418a-b2c2-98af962a1037
 details("knees", @doc knees)
+
+# ╔═╡ ce47dd59-3ba1-4e9e-a8e7-7a3368ef7094
+details("ScanSensitivity", @doc ScanSensitivity)
+
+# ╔═╡ 9413c241-1742-4a62-9989-c87a3212beda
+details("ScanSmoothing", @doc ScanSmoothing)
+
+# ╔═╡ 7bccae2a-daf9-4ef3-a3d1-b7f10ba2e22a
+details("ScanStrength", @doc ScanStrength)
+
+# ╔═╡ db96f322-612b-4953-a966-8bd4850891db
+details("ScanJump", @doc ScanJump)
+
+# ╔═╡ 6f154f7f-85f9-4538-99ab-4b94bfd24ed1
+details("ScanTri", @doc ScanTri)
 
 # ╔═╡ 98a9b4cb-8fd9-480c-b1ce-418672e0441a
 details("viz", @doc viz)
@@ -546,7 +574,7 @@ end
 let
 	fig = Figure(); ax = Axis(fig[1, 1], xlabel = L"\log_{10} \, \lambda", ylabel = "error")
 	log10λs = log10.(λs_jump)
-	kr = kneedle(log10λs, errs_jump, "_|", 1, scan_type = :jump)
+	kr = kneedle(log10λs, errs_jump, "_|", 1, kneedle_scan_algorithm = ScanJump())
 	viz!(ax, log10λs, errs_jump, kr, show_data_smoothed=false)
 	Legend(fig[2, 1], ax, orientation = :horizontal, merge = true)
 	fig
@@ -557,7 +585,7 @@ let
 	Random.seed!(1234)
 	fig = Figure(); ax = Axis(fig[1, 1], xlabel = L"\log_{10} \, \lambda", ylabel = "error")
 	log10λs = log10.(λs)
-	kr = kneedle(log10λs, errs, "_|", 1, scan_type = :tri)
+	kr = kneedle(log10λs, errs, "_|", 1, kneedle_scan_algorithm = ScanTri())
 	viz!(ax, log10λs, errs, kr, show_data_smoothed=true)
 	Legend(fig[2, 1], ax, orientation = :horizontal)
 	fig
@@ -568,7 +596,7 @@ let
 	Random.seed!(1234)
 	fig = Figure(); ax = Axis(fig[1, 1], xlabel = L"\log_{10} \, \lambda", ylabel = "error")
 	log10λs = log10.(λs_jump)
-	kr = kneedle(log10λs, errs_jump, "_|", 1, scan_type = :tri)
+	kr = kneedle(log10λs, errs_jump, "_|", 1, kneedle_scan_algorithm = ScanTri())
 	viz!(ax, log10λs, errs_jump, kr, show_data_smoothed=true)
 	Legend(fig[2, 1], ax, orientation = :horizontal, merge = true)
 	fig
@@ -645,6 +673,11 @@ end
 # ╟─1a6cfb27-b5d6-46b3-8f48-399fae9247c3
 # ╟─faaf42c4-e817-441c-b3db-8ec562e15323
 # ╟─975a39fa-f4ad-418a-b2c2-98af962a1037
+# ╟─ce47dd59-3ba1-4e9e-a8e7-7a3368ef7094
+# ╟─9413c241-1742-4a62-9989-c87a3212beda
+# ╟─7bccae2a-daf9-4ef3-a3d1-b7f10ba2e22a
+# ╟─db96f322-612b-4953-a966-8bd4850891db
+# ╟─6f154f7f-85f9-4538-99ab-4b94bfd24ed1
 # ╟─98a9b4cb-8fd9-480c-b1ce-418672e0441a
 # ╟─671cfa97-f929-4cf4-8790-221d1ff1c6bc
 # ╟─09000615-a7d7-421b-8444-113821058b96
